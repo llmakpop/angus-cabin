@@ -80,9 +80,12 @@ export async function DayDrawer({
                     </span>
                   </div>
 
-                  <p className="text-sm font-medium">
+                  <Link
+                    href={`/stays/${stay.id}`}
+                    className="text-sm font-medium hover:underline"
+                  >
                     {stay.creator_name ?? "Unknown"} hosting
-                  </p>
+                  </Link>
 
                   {stay.notes ? (
                     <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">

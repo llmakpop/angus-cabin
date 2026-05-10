@@ -56,17 +56,28 @@ export async function createStay(formData: FormData) {
     redirect("/login");
   }
 
-  const { error } = await supabase.from("stays").insert({
-    created_by_user_id: user.id,
-    stay_type: stayType as StayType,
-    start_date: startDate,
-    end_date: endDate,
-    notes,
-  });
+  const { data: newStay, error } = await supabase
+    .from("stays")
+    .insert({
+      created_by_user_id: user.id,
+      stay_type: stayType as StayType,
+      start_date: startDate,
+      end_date: endDate,
+      notes,
+    })
+    .select("id")
+    .single();
 
-  if (error) {
-    failBack(error.message, { date: startDate });
+  if (error || !newStay) {
+    failBack(error?.message ?? "Could not create stay.", { date: startDate });
   }
+
+  // Auto-add the creator as the first attendee. Failure here is non-fatal —
+  // the stay still exists and the creator can re-add themselves manually.
+  await supabase.from("stay_attendees").insert({
+    stay_id: newStay.id,
+    user_id: user.id,
+  });
 
   const monthParam = toMonthParam(fromIsoDate(startDate));
   redirect(`/?month=${monthParam}&date=${startDate}`);

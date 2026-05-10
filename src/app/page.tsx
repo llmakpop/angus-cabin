@@ -91,32 +91,44 @@ export default async function Home({
       </header>
 
       <main className="flex flex-1 flex-col p-4">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-xl font-semibold tracking-tight">
             {monthLabel(month)}
           </h2>
-          <nav className="flex items-center gap-1 text-sm">
+          <div className="flex items-center gap-2 text-sm">
             <Link
-              href={`/?month=${prevMonthParam}`}
-              className="rounded-md border border-zinc-300 px-2 py-1 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
-              aria-label="Previous month"
+              href={
+                selectedDate
+                  ? `/stays/new?date=${selectedDate}`
+                  : "/stays/new"
+              }
+              className="rounded-md bg-zinc-900 px-3 py-1.5 font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
-              ←
+              + New stay
             </Link>
-            <Link
-              href={`/?month=${thisMonthParam}`}
-              className="rounded-md border border-zinc-300 px-2 py-1 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
-            >
-              Today
-            </Link>
-            <Link
-              href={`/?month=${nextMonthParam}`}
-              className="rounded-md border border-zinc-300 px-2 py-1 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
-              aria-label="Next month"
-            >
-              →
-            </Link>
-          </nav>
+            <nav className="flex items-center gap-1">
+              <Link
+                href={`/?month=${prevMonthParam}`}
+                className="rounded-md border border-zinc-300 px-2 py-1 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+                aria-label="Previous month"
+              >
+                ←
+              </Link>
+              <Link
+                href={`/?month=${thisMonthParam}`}
+                className="rounded-md border border-zinc-300 px-2 py-1 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+              >
+                Today
+              </Link>
+              <Link
+                href={`/?month=${nextMonthParam}`}
+                className="rounded-md border border-zinc-300 px-2 py-1 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+                aria-label="Next month"
+              >
+                →
+              </Link>
+            </nav>
+          </div>
         </div>
 
         <div className="grid grid-cols-7 gap-px overflow-hidden rounded-md border border-zinc-200 bg-zinc-200 dark:border-zinc-800 dark:bg-zinc-800">

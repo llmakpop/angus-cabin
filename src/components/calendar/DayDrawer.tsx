@@ -51,9 +51,17 @@ export async function DayDrawer({
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
           {stays.length === 0 ? (
-            <p className="text-sm text-zinc-500">
-              No stays scheduled. Use the calendar to find an open weekend.
-            </p>
+            <div className="space-y-3">
+              <p className="text-sm text-zinc-500">
+                No stays scheduled.
+              </p>
+              <Link
+                href={`/stays/new?date=${date}`}
+                className="inline-block rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              >
+                + Book this day
+              </Link>
+            </div>
           ) : (
             <ul className="space-y-4">
               {stays.map((stay) => (

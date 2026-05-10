@@ -9,8 +9,10 @@ import {
   buildMonthGrid,
   monthLabel,
   toIsoDate,
+  isValidIsoDate,
   DAY_OF_WEEK_LABELS,
 } from "@/lib/calendar/dates";
+import { DayDrawer } from "@/components/calendar/DayDrawer";
 
 const STAY_TYPE_COLORS: Record<CalendarStay["stay_type"], string> = {
   solo: "bg-blue-100 text-blue-900 dark:bg-blue-900/40 dark:text-blue-100",
@@ -25,11 +27,13 @@ const STAY_TYPE_COLORS: Record<CalendarStay["stay_type"], string> = {
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string }>;
+  searchParams: Promise<{ month?: string; date?: string }>;
 }) {
-  const { month: monthParam } = await searchParams;
+  const { month: monthParam, date: dateParam } = await searchParams;
   const month = parseMonthParam(monthParam);
   const days = buildMonthGrid(month);
+  const selectedDate = isValidIsoDate(dateParam) ? dateParam : null;
+  const currentMonthParam = toMonthParam(month);
 
   const supabase = await createClient();
   const {
@@ -130,12 +134,14 @@ export default async function Home({
             const inMonth = day.getMonth() === month.getMonth();
             const dayStays = staysByDay.get(iso) ?? [];
             const isToday = iso === todayIso;
+            const isSelected = iso === selectedDate;
             return (
-              <div
+              <Link
                 key={iso}
-                className={`min-h-24 bg-white p-1.5 dark:bg-zinc-950 ${
+                href={`/?month=${toMonthParam(day)}&date=${iso}`}
+                className={`group min-h-24 bg-white p-1.5 transition-colors hover:bg-zinc-50 dark:bg-zinc-950 dark:hover:bg-zinc-900 ${
                   inMonth ? "" : "opacity-50"
-                }`}
+                } ${isSelected ? "ring-2 ring-inset ring-zinc-900 dark:ring-zinc-100" : ""}`}
               >
                 <div
                   className={`mb-1 text-xs ${
@@ -157,11 +163,18 @@ export default async function Home({
                     </div>
                   ))}
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
       </main>
+
+      {selectedDate ? (
+        <DayDrawer
+          date={selectedDate}
+          closeHref={`/?month=${currentMonthParam}`}
+        />
+      ) : null}
     </div>
   );
 }

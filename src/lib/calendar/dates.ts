@@ -63,3 +63,16 @@ export function buildMonthGrid(month: Date): Date[] {
 }
 
 export const DAY_OF_WEEK_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+export function formatDateLong(d: Date): string {
+  return d.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export function isValidIsoDate(s: string | undefined | null): s is IsoDate {
+  return !!s && /^\d{4}-\d{2}-\d{2}$/.test(s);
+}

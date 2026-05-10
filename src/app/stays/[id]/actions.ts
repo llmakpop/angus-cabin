@@ -46,3 +46,43 @@ export async function removeAttendee(stayId: string, attendeeId: string) {
   if (error) failBack(stayId, error.message);
   revalidatePath(`/stays/${stayId}`);
 }
+
+// Save sleep-spot assignments for one night of a stay. Form fields are named
+// `spot_for_<attendeeId>` whose value is the chosen sleep_spot_id (or empty
+// to unassign).
+export async function setNightAssignments(
+  stayId: string,
+  nightDate: string,
+  formData: FormData,
+) {
+  const supabase = await createClient();
+
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith("spot_for_")) continue;
+    const attendeeId = key.slice("spot_for_".length);
+    const spotId = String(value);
+
+    if (!spotId) {
+      const { error } = await supabase
+        .from("sleep_assignments")
+        .delete()
+        .eq("attendee_id", attendeeId)
+        .eq("night_date", nightDate);
+      if (error) failBack(stayId, error.message);
+      continue;
+    }
+
+    const { error } = await supabase.from("sleep_assignments").upsert(
+      {
+        stay_id: stayId,
+        attendee_id: attendeeId,
+        sleep_spot_id: spotId,
+        night_date: nightDate,
+      },
+      { onConflict: "attendee_id,night_date" },
+    );
+    if (error) failBack(stayId, error.message);
+  }
+
+  revalidatePath(`/stays/${stayId}`);
+}

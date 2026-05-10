@@ -6,12 +6,13 @@ import {
   fetchFamilyMembers,
   type StayDetailAttendee,
 } from "@/lib/queries/stay-detail";
+import { fetchStaySleepInfo } from "@/lib/queries/stay-sleep";
 import {
   formatDateLong,
   fromIsoDate,
   toMonthParam,
 } from "@/lib/calendar/dates";
-import { addAttendee, removeAttendee } from "./actions";
+import { addAttendee, removeAttendee, setNightAssignments } from "./actions";
 
 const STAY_TYPE_LABELS = {
   solo: "Solo",
@@ -64,6 +65,12 @@ export default async function StayDetailPage({
   const availableFamily = family.filter(
     (f) => !alreadyAttendingUserIds.has(f.id),
   );
+
+  const showSleepSection =
+    stay.stay_type !== "day_trip" && stay.attendees.length > 0;
+  const sleep = showSleepSection
+    ? await fetchStaySleepInfo(stay.id, stay.start_date, stay.end_date)
+    : null;
 
   const calendarBackHref = `/?month=${toMonthParam(fromIsoDate(stay.start_date))}&date=${stay.start_date}`;
   const dateLabel =
@@ -226,6 +233,89 @@ export default async function StayDetailPage({
           </p>
         )}
       </section>
+
+      {sleep && sleep.nights.length > 0 ? (
+        <section className="mt-8 space-y-4">
+          <h2 className="text-base font-semibold">Sleep assignments</h2>
+          <p className="text-xs text-zinc-500">
+            Capacity is shown but not enforced — the cabin flexes.
+          </p>
+
+          {sleep.nights.map((night) => (
+            <form
+              key={night.date}
+              action={setNightAssignments.bind(null, stay.id, night.date)}
+              className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800"
+            >
+              <header className="mb-3 flex items-center justify-between gap-2">
+                <h3 className="text-sm font-medium">
+                  {formatDateLong(fromIsoDate(night.date))} night
+                </h3>
+                {canEdit ? (
+                  <button
+                    type="submit"
+                    className="rounded-md bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                  >
+                    Save night
+                  </button>
+                ) : null}
+              </header>
+              <ul className="space-y-2">
+                {stay.attendees.map((a) => {
+                  const currentSpot = night.assignments.get(a.id)
+                    ?.sleep_spot_id;
+                  const displayName =
+                    a.user_name ?? a.guest_name ?? "Unknown";
+                  return (
+                    <li
+                      key={a.id}
+                      className="flex flex-wrap items-center gap-2"
+                    >
+                      <span className="min-w-32 flex-1 text-sm">
+                        {displayName}
+                        {a.is_pet ? " 🐾" : ""}
+                        {a.is_child ? " (child)" : ""}
+                      </span>
+                      <select
+                        name={`spot_for_${a.id}`}
+                        defaultValue={currentSpot ?? ""}
+                        disabled={!canEdit}
+                        className="flex-1 min-w-48 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950"
+                      >
+                        <option value="">Unassigned</option>
+                        {sleep.spots.map((spot) => {
+                          const occupied =
+                            night.occupancyBySpot.get(spot.id) ?? 0;
+                          const isMine = currentSpot === spot.id;
+                          // Remaining count, treating "this attendee here" as
+                          // already counted so the dropdown stays accurate.
+                          const remaining =
+                            spot.capacity - occupied + (isMine ? 1 : 0);
+                          const isFull = remaining <= 0;
+                          const flagSuffix =
+                            spot.flags.length > 0
+                              ? ` — ${spot.flags.join(", ")}`
+                              : "";
+                          return (
+                            <option
+                              key={spot.id}
+                              value={spot.id}
+                              disabled={isFull && !isMine}
+                            >
+                              {spot.label} ({remaining}/{spot.capacity})
+                              {flagSuffix}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </li>
+                  );
+                })}
+              </ul>
+            </form>
+          ))}
+        </section>
+      ) : null}
     </main>
   );
 }
